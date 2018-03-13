@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="scripts/lib.js"></script>
+  <meta charset="utf-8">
+  <title>AngularJS $injector demo 2</title>
+  <script>
+    angular.module('myApp', [])
+    .controller('MainCtrl', [function () {
+      var self = this;
+      self.Name = "Will";
+    }])
+    .value('version', '0.0.1');
+
+    function myfunc(elm) {
+        var $injector = angular.element(elm).injector();
+        //var $injector = angular.element('#main').injector();
+        var version = $injector.get('version');
+        console.log(version);
+        
+        var $injector = angular.injector(['ng']);
+        var $http = $injector.get('$http');
+        console.log($http);
+
+        var $injector = angular.injector(['ng', 'myApp']);
+        var version = $injector.get('version');
+        console.log(version);
+
+        var $scope = angular.element(elm).scope();
+        console.log($scope);
+
+    }
+  </script>
+</head>
+<body ng-app="myApp">
+  <div ng-controller="MainCtrl as main" id="main">
+    請輸入姓名: <input type="text" ng-model="main.Name">
+    <br>
+    {{main.Name}} 你好!
+    <p>
+    <button onclick="myfunc(this)">按下我取得 $injector 注入器物件</button>
+
+  </div>
+</body>
+</html>

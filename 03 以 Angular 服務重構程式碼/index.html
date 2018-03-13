@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html ng-app="myApp">
+<head>
+  <script src="//code.jquery.com/jquery.min.js"></script>
+  <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/css/bootstrap-combined.min.css" rel="stylesheet" type="text/css" />
+  <script src="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/js/bootstrap.min.js"></script>
+  <script src="//code.angularjs.org/1.4.1/angular.js"></script>
+  <script src="//code.angularjs.org/1.4.1/angular-cookies.js"></script>
+  <meta charset="utf-8">
+  <title>【AngularJS 開發實戰：新手入門篇】實作練習</title>
+  <style type="text/css" media="screen">
+  .even {
+    background-color: #DDD;
+  }
+
+  .highlight {
+    background-color: yellow;
+  }
+  </style>
+  <script>
+
+  angular.module('myApp', ['ngCookies'])
+  .config(['$cookiesProvider', function ($cookiesProvider) {
+    $cookiesProvider.defaults.path = '/';
+  }])
+  .value('version', '0.1')
+  .controller('MainCtrl', ['version', MainCtrl]);
+
+  function MainCtrl(version) {
+    var vm = this;
+    
+    vm.version = version;
+    //vm.IsDebug = false;
+    
+    vm.PName = 'T-Shirt (Female)';
+    vm.Price = 200;
+    vm.Qty = 5;
+    
+    vm.subtotal = function(Price, Qty) {
+      var result = Price * Qty;
+      if(Qty > 9) result = result * 0.9;
+      return result;
+    };
+    
+    vm.carts = [];
+    
+    vm.carts.push({
+      'PName': 'T-shirt (Male) - M', 
+      'Price': 200,
+      'Qty': 10
+    });
+    
+    vm.carts.push({
+      'PName': 'T-shirt (Male) - L', 
+      'Price': 200,
+      'Qty': 2
+    });
+    
+    vm.carts.push({
+      'PName': 'Coat - L', 
+      'Price': 1200,
+      'Qty': 1
+    });
+    
+    vm.carts.push({
+      'PName': 'Eye glasses', 
+      'Price': 1999,
+      'Qty': 3
+    });
+    
+    vm.add = function() {
+      vm.carts.push({
+        'PName': vm.PName, 
+        'Price': vm.Price,
+        'Qty': vm.Qty
+      });
+    };
+    
+    vm.sum = function()
+    {
+      var result = 0;
+      for(var i in vm.carts) {
+        result += vm.subtotal(vm.carts[i].Price, vm.carts[i].Qty);
+      }
+      return result;
+    };
+    
+    vm.del = function(item)
+    {
+      var idx;
+      for(var i in vm.carts) {
+        if(item == vm.carts[i]) {
+          idx = i;
+        }
+      }
+      vm.carts.splice(idx, 1);
+    };
+    
+    vm.BatchDel = function() {
+      var newcarts = [];
+      for(var i in vm.carts) {
+        if(!vm.carts[i].ToBeDeleted) {
+          newcarts.push(vm.carts[i]);
+        }
+      }
+      vm.carts = newcarts;
+    };
+    
+    vm.SelectAll = function()
+    {
+      for(var i in vm.carts) {
+        vm.carts[i].ToBeDeleted=vm.IsSelectAll;
+      }
+    };
+    
+    vm.edit = function(item) {
+      item.Qty2 = item.Qty;
+      item.IsEdit=true;
+    };
+    vm.editDone = function(item) {
+      item.Qty = item.Qty2;
+      delete item.Qty2;
+      delete item.IsEdit;
+    };
+    vm.editCancel = function(item) {
+      delete item.Qty2;
+      delete item.IsEdit;
+    };
+  }
+  </script>
+</head>
+<body ng-controller="MainCtrl as m">
+
+  <p>版本: {{m.version}}</p>
+  商品名稱: <input type="text" ng-model="m.PName"><br>
+  商品價格: <input type="number" ng-model="m.Price"><br>
+  購買數量: <input type="number" ng-model="m.Qty"><br>
+  <br>  
+  您購買了 <strong style="color:red">{{m.PName||'N/A'}}</strong> 商品，買了 {{m.Qty||0}} 件，單價 {{m.Price||0 | number}} 元，共 {{m.subtotal(m.Price, m.Qty) | currency:'NT$ '}} 元。<br>
+  <br>
+  <button ng-click="m.add()">加入購物車</button>
+  <button ng-click="m.carts=[]">清空購物車</button>
+  <br><br>
+  <label><input type="checkbox" ng-model="m.IsDebug"> 啟用偵錯</label>
+  <pre ng-show="m.IsDebug" ng-bind="m.carts|json"></pre>
+  <br>
+  <table class="table">
+    <caption>
+      關鍵字: <input type="text" ng-model="m.keyword">
+    </caption>
+    <tr>
+      <th>
+        <input type="checkbox" ng-model="m.IsSelectAll" ng-change="m.SelectAll()">
+      </th>
+      <th>功能</th>
+      <th>#</th>
+      <th>商品名稱</th>
+      <th>
+        <a href="" ng-click="m.Sort='Price'">↑</a>
+        商品價格
+        <a href="" ng-click="m.Sort='-Price'">↓</a>
+      </th>
+      <th>購買數量</th>
+      <th>小計</th>
+    </tr>
+    <tr ng-repeat="item in m.carts | orderBy:m.Sort | filter:{'PName': m.keyword}" 
+        ng-mouseover="IsHighlight=true"
+        ng-mouseleave="IsHighlight=false"
+        ng-class="{'even': $even, 'highlight':IsHighlight}">
+      <td>
+        <input type="checkbox" ng-model="item.ToBeDeleted">
+      </td>
+      <td>
+        <button ng-click="m.del(item)">刪除</button>
+        <button ng-click="m.edit(item)" 
+                ng-hide="item.IsEdit">編輯</button>
+        <button ng-click="m.editDone(item)"
+                ng-show="item.IsEdit">完成</button>
+        <button ng-click="m.editCancel(item)"
+                ng-show="item.IsEdit">取消</button>
+      </td>
+      <td>{{$index+1}}</td>
+      <td>{{item.PName}}</td>
+      <td>{{item.Price}}</td>
+      <td>
+      
+        <span ng-hide="item.IsEdit">{{item.Qty}}</span>
+      
+        <input type="number" 
+               ng-show="item.IsEdit"
+               class="input-mini"
+               ng-model="item.Qty2">
+      
+        
+      </td>
+      <td>${{m.subtotal(item.Price, item.Qty)|number}}</td>
+    </tr>
+    <tr>
+      <th colspan="2">
+        <button ng-click="m.BatchDel()">批次刪除</button>
+      </th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th>加總</th>
+      <th>${{m.sum()|number}}</th>
+    </tr>
+  </table>
+  
+   
+</body>
+</html>
